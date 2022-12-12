@@ -1,0 +1,5 @@
+*.iso
+inventory
+rhce-test-dummy-network.xml
+rhce-test-save/
+rhce-res-save/

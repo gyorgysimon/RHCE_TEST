@@ -1,0 +1,148 @@
+---
+- name: Setup repos & materials
+  hosts: 10.9.0.54
+  gather_facts: no
+  vars:
+    - ansible_password: password
+    - ansble_user: root
+    - baserepos_directory: /mnt/baserepos 
+    - updates_repo_directory: /mnt/extrarepos/updates
+    - ansible_repo_directory: /mnt/extrarepos/ansible2.8
+    - http_pub_directory: /var/www/html/templates
+    - http_role_directory: /var/www/html/roles
+    - packages: 
+      - vsftpd
+      - httpd
+      - createrepo
+      - chrony
+    - services:
+      - vsftpd
+      - httpd
+      - chronyd
+
+  tasks:
+  # create repositories
+  - name: create baserepos direcory
+    file:
+      dest: "{{ baserepos_directory }}"
+      state: directory
+      
+  - name: Mount DVD ISO for base repos
+    mount:
+      src: /dev/sr0
+      path: "{{ baserepos_directory }}"
+      opts: 'context=system_u:object_r:public_content_t:s0'
+      fstype: iso9660
+      state: mounted
+      
+  - name: Create own BaseOS repos
+    yum_repository:
+      name: BaseOS 
+      description: 'BaseOS repository of DVD'
+      baseurl: /mnt/baserepos/BaseOS
+      gpgcheck: no
+      enabled: yes
+  
+  - name: Create own AppStream repos
+    yum_repository:
+      name: AppStream 
+      description: 'AppStream repository of DVD'
+      baseurl: /mnt/baserepos/AppStream
+      gpgcheck: no
+      enabled: yes
+      
+  - name: Install packages
+    dnf:
+      name: "{{ packages }}"
+      state: present
+      
+  - name: create {{ updates_repo_directory }}
+    file:
+      dest: "{{ updates_repo_directory }}"
+      recurse: yes
+      state: directory
+      setype: public_content_t
+      
+  - name: Unarchive kernel updates into {{ updates_repo_directory }}
+    unarchive:
+      copy: true
+      dest: "{{ updates_repo_directory }}"
+      setype: public_content_t
+      src: rhel-kernel-updates.tar
+
+  - name: create ansible2.8 repos
+    file: 
+      dest: "{{ ansible_repo_directory }}"
+      recurse: yes 
+      state: directory
+      setype: public_content_t
+
+  - name: Unarchive ansible repo into {{ ansible_repo_directory }}
+    unarchive: 
+      copy: true
+      dest: "{{ ansible_repo_directory }}"
+      src: ansible-2.8-repo.tar
+      setype: public_content_t
+
+  - name: create repo from {{ ansible_repo_directory }}
+    shell:
+      cmd: createrepo .
+      chdir: "{{ ansible_repo_directory }}"
+
+  - name: Enable anon login into vsftp
+    lineinfile:
+      path: /etc/vsftpd/vsftpd.conf 
+      regexp: '^anonymous'
+      line: 'anonymous_enable=YES'
+      state: present
+  
+  - name: set anon_root in vsftp
+    lineinfile:
+      path: /etc/vsftpd/vsftpd.conf
+      line: 'anon_root=/mnt'
+      state: present
+
+  - name: create {{ http_pub_directory }}
+    file:
+      dest: "{{ http_pub_directory }}"
+      recurse: yes
+      state: directory
+      setype: httpd_sys_content_t
+
+  - name: setup http content
+    unarchive:
+      copy: true
+      dest: "{{ http_pub_directory }}"
+      setype: httpd_sys_content_t
+      src: ftpre.tar
+      
+  - name: create {{ http_role_directory }}
+    file:
+      dest: "{{ http_role_directory }}"
+      recurse: yes
+      state: directory
+      setype: httpd_sys_content_t   
+      
+  - name: copy role into the {{ http_role_directory }}
+    copy:
+      src: geerlingguy.mysql.tar.gz
+      dest: "{{ http_role_directory }}"
+      setype: httpd_sys_content_t
+  
+  - name: edit configuration of chronyd to provide NTP service
+    lineinfile:
+      path: /etc/chrony.conf
+      insertafter: yes
+      regexp: '^#allow'
+      line: 'allow 10.9.0.0/29'
+      state: present
+      
+#start services
+  - name: Start & enable services
+    service:
+      name: "{{ item }}"
+      enabled: yes
+      state: started
+    loop: "{{ services }}"
+      
+...

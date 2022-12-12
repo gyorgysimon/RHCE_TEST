@@ -1,0 +1,38 @@
+---
+- name: Basic Setup of Control node
+  hosts: 10.9.0.50
+  gather_facts: no
+  vars:
+    - ansible_password: password
+    - ansble_user: root
+
+  tasks:
+  - name: Create BaseOS repos
+    yum_repository:
+      name: BaseOS 
+      description: 'BaseOS repository'
+      baseurl: ftp://utility.rhce.example.com/baserepos/BaseOS
+      gpgcheck: no
+      enabled: yes
+      
+  - name: Create AppStream repos
+    yum_repository:
+      name: AppStream 
+      description: 'AppStream repository'
+      baseurl: ftp://utility.rhce.example.com/baserepos/AppStream
+      gpgcheck: no
+      enabled: yes
+
+  - name: Create ansible repos
+    yum_repository:
+      name: Ansible 
+      description: 'Ansible 2.8'
+      baseurl: ftp://utility.rhce.example.com/extrarepos/ansible2.8
+      gpgcheck: no
+      enabled: yes
+
+  - name: Enable passwordless sudo
+    copy:
+      content: "ansiusr ALL=(ALL) NOPASSWD: ALL"
+      dest: "/etc/sudoers.d/ansiusr"
+

@@ -1,0 +1,20 @@
+<network>
+  <name>rhce-test-network</name>
+  <forward mode='route'/>
+<!--    <nat>
+      <port start='1024' end='65535'/>
+    </nat>
+  </forward> -->
+  <mac address='52:54:00:8e:3b:52'/>
+  <domain name='rhce.example.com'/>
+  <ip address='10.9.0.49' netmask='255.255.255.248'>
+    <dhcp>
+      <range start='10.9.0.50' end='10.9.0.54'/>
+			<host mac='52:54:00:5d:e1:50' name='control' ip='10.9.0.50'/>
+			<host mac='52:54:00:5d:e1:51' name='node1' ip='10.9.0.51'/>
+			<host mac='52:54:00:5d:e1:52' name='node2' ip='10.9.0.52'/>
+			<host mac='52:54:00:5d:e1:53' name='node3' ip='10.9.0.53'/>
+   		<host mac='52:54:00:5d:e1:54' name='utility' ip='10.9.0.54'/>
+    </dhcp>
+  </ip>
+</network>
