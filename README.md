@@ -12,7 +12,7 @@ This environment intent to have a clear picture about the ansible engine knowled
 2. user need to be in the libvirt and qemu groups
   `usermod -aG libvirt,qemu [username]`
 
-3. You will need the rhel-8.1-x86_64-dvd.iso for the environment. You can download it from the access.redhat.com
+3. You will need the rhel-8.1-x86_64-dvd.iso & rhel-8.1-x86_64-kvm.qcow2 for the environment. You can download it from the access.redhat.com
 
 4. need to ensure x permisson to the `qemu` (which is probalby `others` from your user point of view) user thourgh the path of the DVD iso file.
 
